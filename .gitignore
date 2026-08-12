@@ -41,3 +41,6 @@ yarn-error.log*
 /node_modules_incomplete/
 /.dev*.log
 /workbook_pages_*.txt
+/vercel-text.json
+/vf-*.json
+/vitem-*.json
