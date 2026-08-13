@@ -1,8 +1,24 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, CheckCircle2, Dumbbell, FilePenLine, Headphones, Layers3, TimerReset, Trophy, WholeWord } from "lucide-react";
 import { AppShell } from "./components/AppShell";
+import { getAudioExercises } from "@/lib/audio-store";
+import { getPracticeExercises } from "@/lib/practice-store";
+import { getPracticeSections } from "@/lib/practice-section-store";
+import { getTheoryLessons } from "@/lib/theory-store";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+function countLabel(value: number, one: string, few: string, many: string) {
+  const lastTwo = value % 100;
+  const last = value % 10;
+  const word = lastTwo >= 11 && lastTwo <= 14 ? many : last === 1 ? one : last >= 2 && last <= 4 ? few : many;
+  return `${value} ${word}`;
+}
+
+export default async function Home() {
+  const [lessons, allPractice, practiceSections, audio, exams] = await Promise.all([getTheoryLessons(), getPracticeExercises(), getPracticeSections(), getAudioExercises(false, "audio"), getAudioExercises(false, "exam")]);
+  const visibleSectionIds = new Set(practiceSections.map((section) => section.id));
+  const practice = allPractice.filter((exercise) => visibleSectionIds.has(exercise.block));
   return (
     <AppShell>
       <main>
@@ -33,9 +49,9 @@ export default function Home() {
         <section className="section">
           <div className="container">
             <div className="stat-grid">
-              <div className="stat"><div className="stat-top"><Layers3 size={21} /><span>курс</span></div><strong>3</strong><span>последовательных блока</span></div>
-              <div className="stat"><div className="stat-top"><BookOpen size={21} /><span>теория</span></div><strong>6</strong><span>коротких уроков</span></div>
-              <div className="stat"><div className="stat-top"><Dumbbell size={21} /><span>практика</span></div><strong>26</strong><span>упражнений с разбором</span></div>
+              <div className="stat"><div className="stat-top"><Layers3 size={21} /><span>курс</span></div><strong>4</strong><span>последовательных этапа</span></div>
+              <div className="stat"><div className="stat-top"><BookOpen size={21} /><span>теория</span></div><strong>{lessons.length}</strong><span>коротких уроков</span></div>
+              <div className="stat"><div className="stat-top"><Dumbbell size={21} /><span>практика</span></div><strong>{practice.length}</strong><span>упражнений с разбором</span></div>
               <div className="stat"><div className="stat-top"><WholeWord size={21} /><span>минимум</span></div><strong>70</strong><span>слов в изложении</span></div>
             </div>
           </div>
@@ -48,10 +64,10 @@ export default function Home() {
               <p className="section-copy">Каждый этап продолжает предыдущий. Ответы и выполненные задания сохраняются на этом устройстве автоматически.</p>
             </div>
             <div className="path-grid path-grid-four">
-              <Link href="/theory" className="path-card"><span className="path-number">01 / РАЗОБРАТЬСЯ</span><span className="path-icon"><BookOpen /></span><h3>Понять систему</h3><p>Как слушать, находить микротемы, сжимать и проверять работу по критериям.</p><span className="arrow-link">6 уроков <ArrowRight size={17} /></span></Link>
-              <Link href="/practice" className="path-card"><span className="path-number">02 / НАТРЕНИРОВАТЬ</span><span className="path-icon"><Dumbbell /></span><h3>Решать по шагам</h3><p>Абзацы, три приёма сжатия и редактура чужих ошибок с образцами ответа.</p><span className="arrow-link">26 заданий <ArrowRight size={17} /></span></Link>
-              <Link href="/audio" className="path-card"><span className="path-number">03 / УСЛЫШАТЬ</span><span className="path-icon"><Headphones /></span><h3>Работать с аудио</h3><p>Живой каталог текстов: два прослушивания, исходник для сверки и собственное изложение.</p><span className="arrow-link">Открыть аудиокаталог <ArrowRight size={17} /></span></Link>
-              <Link href="/simulator" className="path-card"><span className="path-number">04 / ПРОВЕРИТЬ</span><span className="path-icon"><FilePenLine /></span><h3>Пройти репетицию</h3><p>Два чтения, таймер, поле для чистовика, счётчик слов и финальный чек-лист.</p><span className="arrow-link">Начать экзамен <ArrowRight size={17} /></span></Link>
+              <Link href="/theory" className="path-card"><span className="path-number">01 / РАЗОБРАТЬСЯ</span><span className="path-icon"><BookOpen /></span><h3>Понять систему</h3><p>Как слушать, находить микротемы, сжимать и проверять работу по критериям.</p><span className="arrow-link">{countLabel(lessons.length, "урок", "урока", "уроков")} <ArrowRight size={17} /></span></Link>
+              <Link href="/practice" className="path-card"><span className="path-number">02 / НАТРЕНИРОВАТЬ</span><span className="path-icon"><Dumbbell /></span><h3>Решать по шагам</h3><p>Отдельные направления навыков, упражнения и ориентиры для самопроверки.</p><span className="arrow-link">{countLabel(practice.length, "задание", "задания", "заданий")} <ArrowRight size={17} /></span></Link>
+              <Link href="/audio" className="path-card"><span className="path-number">03 / УСЛЫШАТЬ</span><span className="path-icon"><Headphones /></span><h3>Работать с аудио</h3><p>Свободная тренировка слуха: записи, заметки, изложение и исходник для сверки.</p><span className="arrow-link">{countLabel(audio.length, "аудиотекст", "аудиотекста", "аудиотекстов")} <ArrowRight size={17} /></span></Link>
+              <Link href="/simulator" className="path-card"><span className="path-number">04 / ПРОВЕРИТЬ</span><span className="path-icon"><FilePenLine /></span><h3>Пройти репетицию</h3><p>Ровно два прослушивания, таймер, черновик, изложение и финальный чек-лист.</p><span className="arrow-link">{exams.length ? countLabel(exams.length, "вариант", "варианта", "вариантов") : "Экзаменационные варианты"} <ArrowRight size={17} /></span></Link>
             </div>
           </div>
         </section>

@@ -12,6 +12,7 @@ function validate(input: Partial<AudioExerciseInput>) {
   if (!input.sourceText?.trim()) return "Добавьте исходный текст.";
   if (!input.audioUrl || !input.audioPathname) return "Загрузите аудиофайл.";
   if (!input.difficulty || !AUDIO_DIFFICULTIES.includes(input.difficulty)) return "Выберите уровень сложности.";
+  if (!input.availableInAudio && !input.availableInExam) return "Выберите хотя бы один раздел для записи.";
   if ((input.title?.length || 0) > 140) return "Название слишком длинное.";
   if ((input.sourceText?.length || 0) > 30000) return "Текст слишком длинный.";
   return null;
@@ -46,4 +47,3 @@ export async function DELETE(request: Request) {
   await deleteAudioExercise(id);
   return NextResponse.json({ ok: true });
 }
-

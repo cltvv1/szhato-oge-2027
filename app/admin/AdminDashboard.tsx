@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { BookOpen, Check, Edit3, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud } from "lucide-react";
+import { BookOpen, Check, Edit3, GraduationCap, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud } from "lucide-react";
 import { AUDIO_DIFFICULTIES, type AudioExercise, type AudioExerciseInput } from "../audio/types";
 import { PracticeAdmin } from "./PracticeAdmin";
+import { TheoryAdmin } from "./TheoryAdmin";
 
 type FormState = {
   title: string;
@@ -13,6 +14,8 @@ type FormState = {
   sourceName: string;
   difficulty: AudioExerciseInput["difficulty"];
   published: boolean;
+  availableInAudio: boolean;
+  availableInExam: boolean;
 };
 
 const emptyForm: FormState = {
@@ -22,6 +25,8 @@ const emptyForm: FormState = {
   sourceName: "",
   difficulty: "Средний",
   published: false,
+  availableInAudio: true,
+  availableInExam: false,
 };
 
 async function audioDuration(file: File) {
@@ -42,7 +47,7 @@ function safeFileName(name: string) {
 }
 
 export function AdminDashboard() {
-  const [section, setSection] = useState<"audio" | "practice">("audio");
+  const [section, setSection] = useState<"audio" | "theory" | "practice">("audio");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [exercises, setExercises] = useState<AudioExercise[]>([]);
@@ -88,7 +93,7 @@ export function AdminDashboard() {
 
   function startEdit(item: AudioExercise) {
     setEditing(item);
-    setForm({ title: item.title, description: item.description, sourceText: item.sourceText, sourceName: item.sourceName, difficulty: item.difficulty, published: item.published });
+    setForm({ title: item.title, description: item.description, sourceText: item.sourceText, sourceName: item.sourceName, difficulty: item.difficulty, published: item.published, availableInAudio: item.availableInAudio, availableInExam: item.availableInExam });
     setFile(null); setError(""); setMessage("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -161,7 +166,7 @@ export function AdminDashboard() {
         <span className="admin-login-icon"><Headphones /></span>
         <span className="eyebrow">Панель автора</span>
         <h1>Вход в панель автора</h1>
-        <p>Здесь Анна может управлять практическими заданиями и аудиозаписями, сохранять черновики и публиковать материалы для учеников.</p>
+        <p>Здесь Анна может управлять уроками, тестами, направлениями практики и аудиозаписями, сохранять черновики и публиковать материалы.</p>
         <form onSubmit={signIn}>
           <label className="field-label" htmlFor="admin-password">Пароль администратора</label>
           <input id="admin-password" className="admin-input" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
@@ -177,11 +182,12 @@ export function AdminDashboard() {
       <div className="admin-workspace-nav">
         <div className="admin-content-tabs" role="tablist" aria-label="Разделы панели автора">
           <button type="button" role="tab" aria-selected={section === "audio"} className={section === "audio" ? "active" : ""} onClick={() => setSection("audio")}><Headphones size={18} /> Аудиоупражнения</button>
+          <button type="button" role="tab" aria-selected={section === "theory"} className={section === "theory" ? "active" : ""} onClick={() => setSection("theory")}><GraduationCap size={18} /> Теория и тесты</button>
           <button type="button" role="tab" aria-selected={section === "practice"} className={section === "practice" ? "active" : ""} onClick={() => setSection("practice")}><BookOpen size={18} /> Практические задания</button>
         </div>
         <button type="button" className="button button-secondary" onClick={signOut}><LogOut size={17} /> Выйти</button>
       </div>
-      {section === "practice" ? <PracticeAdmin /> : <div className="admin-layout">
+      {section === "practice" ? <PracticeAdmin /> : section === "theory" ? <TheoryAdmin /> : <div className="admin-layout">
       <section className="admin-editor">
         <div className="admin-section-head">
           <div><span className="eyebrow">{editing ? "Редактирование" : "Новое упражнение"}</span><h1>{editing ? editing.title : "Добавить текст и аудио"}</h1></div>
@@ -201,6 +207,7 @@ export function AdminDashboard() {
             <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/ogg,audio/webm,.mp3,.m4a,.wav,.ogg,.webm" onChange={(event) => setFile(event.target.files?.[0] || null)} />
           </label>
           {editing && !file ? <div className="current-audio">{/* The full source transcript is stored beside every recording. */}<audio controls src={editing.audioUrl} aria-label={`Текущая аудиозапись: ${editing.title}`} />{/* eslint-disable-line jsx-a11y/media-has-caption */}<span>Текущая запись сохранится, если не выбрать новую.</span></div> : null}
+          <div className="admin-destination-grid"><label className="publish-toggle" aria-label="Добавить в аудиотренажёр"><input type="checkbox" checked={form.availableInAudio} onChange={(event) => setForm({ ...form, availableInAudio: event.target.checked })} /><span><strong>Аудиотренажёр</strong><small>Свободное прослушивание, заметки и исходный текст.</small></span></label><label className="publish-toggle" aria-label="Добавить в экзаменационный режим"><input type="checkbox" checked={form.availableInExam} onChange={(event) => setForm({ ...form, availableInExam: event.target.checked })} /><span><strong>Экзаменационный режим</strong><small>Только два прослушивания, исходный текст скрыт.</small></span></label></div>
           <label className="publish-toggle" htmlFor="exercise-published" aria-label="Опубликовать для учеников"><input id="exercise-published" type="checkbox" checked={form.published} onChange={(event) => setForm({ ...form, published: event.target.checked })} /><span><strong>Опубликовать для учеников</strong><small>Если выключено, упражнение останется черновиком и будет видно только здесь.</small></span></label>
           {uploadPercent > 0 && uploadPercent < 100 ? <div className="upload-progress"><span style={{ width: `${uploadPercent}%` }} /><strong>{uploadPercent}%</strong></div> : null}
           {error ? <div className="form-error">{error}</div> : null}
@@ -219,6 +226,7 @@ export function AdminDashboard() {
             <article className="admin-record" key={item.id}>
               <div className="admin-record-status"><span className={item.published ? "published" : "draft"}>{item.published ? "Опубликовано" : "Черновик"}</span><span>{item.difficulty}</span></div>
               <h3>{item.title}</h3>
+              <p className="admin-record-preview">{item.availableInAudio ? "Аудиотренажёр" : ""}{item.availableInAudio && item.availableInExam ? " · " : ""}{item.availableInExam ? "Экзамен" : ""}</p>
               {/* Every recording has a complete source transcript in its exercise record. */}
               <audio controls preload="none" src={item.audioUrl} aria-label={`Аудиозапись: ${item.title}`} />{/* eslint-disable-line jsx-a11y/media-has-caption */}
               <div className="admin-record-actions"><button type="button" onClick={() => startEdit(item)}><Edit3 size={15} /> Изменить</button><button type="button" className="danger" onClick={() => remove(item)}><Trash2 size={15} /> Удалить</button></div>

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Dumbbell, FilePenLine, Headphones, House, Leaf } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, Dumbbell, FilePenLine, Headphones, Leaf } from "lucide-react";
 import { useProgress } from "./ProgressProvider";
 
 const links = [
-  { href: "/", label: "Главная", icon: House },
   { href: "/theory", label: "Теория", icon: BookOpen },
   { href: "/practice", label: "Практика", icon: Dumbbell },
   { href: "/audio", label: "Аудио", icon: Headphones },
@@ -16,7 +16,14 @@ const links = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const { completed } = useProgress();
-  const percent = Math.round((completed.length / 32) * 100);
+  const [coreIds, setCoreIds] = useState<string[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/course-summary", { signal: controller.signal }).then((response) => response.json()).then((data) => setCoreIds(Array.isArray(data.coreIds) ? data.coreIds : [])).catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+  const coreDone = coreIds.filter((id) => completed.includes(id)).length;
+  const percent = coreIds.length ? Math.min(100, Math.round((coreDone / coreIds.length) * 100)) : 0;
   return (
     <div className="page-shell">
       <header className="site-header">

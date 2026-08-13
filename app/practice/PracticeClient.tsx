@@ -5,18 +5,18 @@ import { Check, ChevronDown, ChevronUp, Eye, Save, Trophy } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { useProgress } from "../components/ProgressProvider";
 import {
-  PRACTICE_BLOCKS,
-  PRACTICE_BLOCK_LABELS,
   type PracticeBlock,
   type PracticeExercise,
+  type PracticeSection,
 } from "./types";
 
 function wordCount(text: string) {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 }
 
-export function PracticeClient({ exercises }: { exercises: PracticeExercise[] }) {
-  const firstBlock = PRACTICE_BLOCKS.find((block) => exercises.some((exercise) => exercise.block === block)) || "paragraphs";
+export function PracticeClient({ exercises, sections }: { exercises: PracticeExercise[]; sections: PracticeSection[] }) {
+  const visibleSections = sections.filter((section) => exercises.some((exercise) => exercise.block === section.id));
+  const firstBlock = visibleSections[0]?.id || sections[0]?.id || "paragraphs";
   const [filter, setFilter] = useState<PracticeBlock>(firstBlock);
   const [open, setOpen] = useState<string | null>(exercises.find((exercise) => exercise.block === firstBlock)?.id || null);
   const [models, setModels] = useState<string[]>([]);
@@ -34,34 +34,34 @@ export function PracticeClient({ exercises }: { exercises: PracticeExercise[] })
       <main>
         <section className="page-intro">
           <div className="container page-intro-grid">
-            <div><span className="eyebrow">Часть 2 · практика</span><h1 className="page-title">Тренажёр навыков</h1><p>{exercises.length} упражнений по трём направлениям. Выбери навык, пиши ответ, сверяйся с ориентиром и отмечай выполненное — всё сохранится автоматически.</p></div>
+            <div><span className="eyebrow">Часть 2 · практика</span><h1 className="page-title">Тренажёр навыков</h1><p>{exercises.length} упражнений по {visibleSections.length} направлениям. Выбери навык, пиши ответ, сверяйся с ориентиром и отмечай выполненное — всё сохранится автоматически.</p></div>
             <div className="progress-panel"><div className="progress-panel-top"><strong>Выполнено заданий</strong><span>{exerciseDone} / {exercises.length}</span></div><div className="progress-bar"><span style={{ width: `${exercises.length ? exerciseDone / exercises.length * 100 : 0}%` }} /></div><div className="progress-caption">Цель — не совпасть слово в слово, а сохранить смысл</div></div>
           </div>
         </section>
         <section className="main">
           <div className="container">
             <div className="filters practice-directions" role="tablist" aria-label="Направления практики">
-              {PRACTICE_BLOCKS.map((block) => {
-                const count = exercises.filter((exercise) => exercise.block === block).length;
+              {visibleSections.map((section) => {
+                const count = exercises.filter((exercise) => exercise.block === section.id).length;
                 return (
                   <button
                     type="button"
                     role="tab"
-                    aria-selected={filter === block}
-                    key={block}
-                    className={`filter-button ${filter === block ? "active" : ""}`}
-                    onClick={() => selectBlock(block)}
+                    aria-selected={filter === section.id}
+                    key={section.id}
+                    className={`filter-button ${filter === section.id ? "active" : ""}`}
+                    onClick={() => selectBlock(section.id)}
                     disabled={!count}
                   >
-                    <span>{PRACTICE_BLOCK_LABELS[block]}</span><small>{count}</small>
+                    <span>{section.title}</span><small>{count}</small>
                   </button>
                 );
               })}
             </div>
             <div className="practice-direction-heading">
               <span>Текущее направление</span>
-              <h2>{PRACTICE_BLOCK_LABELS[filter]}</h2>
-              <p>{filter === "paragraphs" ? "Учимся видеть смысловые части, восстанавливать порядок и формулировать микротемы." : filter === "compression" ? "Тренируем исключение, обобщение и упрощение без потери авторской мысли." : "Находим речевые, логические и смысловые ошибки и собираем точный связный текст."}</p>
+              <h2>{sections.find((section) => section.id === filter)?.title || "Практика"}</h2>
+              <p>{sections.find((section) => section.id === filter)?.description}</p>
             </div>
             <div className="exercise-list">
               {shown.map((exercise, index) => {

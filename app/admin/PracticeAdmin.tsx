@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Archive, BookOpen, Check, Edit3, LoaderCircle, Plus, RotateCcw } from "lucide-react";
+import { Archive, BookOpen, Check, Edit3, Layers3, LoaderCircle, Plus, RotateCcw } from "lucide-react";
 import {
-  PRACTICE_BLOCKS,
-  PRACTICE_BLOCK_LABELS,
   PRACTICE_LEVELS,
   type PracticeBlock,
   type PracticeExercise,
   type PracticeExerciseInput,
+  type PracticeSection,
 } from "../practice/types";
+import { PracticeSectionsAdmin } from "./PracticeSectionsAdmin";
 
 type FormState = Omit<PracticeExerciseInput, "id">;
 
@@ -31,7 +31,9 @@ const emptyForm: FormState = {
 };
 
 export function PracticeAdmin() {
+  const [mode, setMode] = useState<"exercises" | "sections">("exercises");
   const [exercises, setExercises] = useState<PracticeExercise[]>([]);
+  const [sections, setSections] = useState<PracticeSection[]>([]);
   const [registryBlock, setRegistryBlock] = useState<PracticeBlock>("paragraphs");
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<PracticeExercise | null>(null);
@@ -44,6 +46,10 @@ export function PracticeAdmin() {
     const data = await response.json();
     if (!response.ok) { setError(data.error || "Не удалось загрузить задания."); return; }
     setExercises(data.exercises);
+    setSections(data.sections);
+    if (data.sections.length) {
+      setRegistryBlock((current) => data.sections.some((section: PracticeSection) => section.id === current) ? current : data.sections[0].id);
+    }
   }, []);
 
   useEffect(() => {
@@ -128,15 +134,17 @@ export function PracticeAdmin() {
 
   const visibleRecords = exercises.filter((exercise) => exercise.block === registryBlock);
 
+  if (mode === "sections") return <div><div className="admin-subtabs" role="tablist" aria-label="Управление практикой"><button type="button" role="tab" aria-selected={false} onClick={() => setMode("exercises")}><BookOpen size={17} /> Задания</button><button type="button" role="tab" aria-selected className="active"><Layers3 size={17} /> Направления</button></div><PracticeSectionsAdmin onChanged={() => void load()} /></div>;
+
   return (
-    <div className="admin-layout practice-admin-layout">
+    <div><div className="admin-subtabs" role="tablist" aria-label="Управление практикой"><button type="button" role="tab" aria-selected className="active"><BookOpen size={17} /> Задания</button><button type="button" role="tab" aria-selected={false} onClick={() => setMode("sections")}><Layers3 size={17} /> Направления</button></div><div className="admin-layout practice-admin-layout">
       <section className="admin-editor">
         <div className="admin-section-head">
           <div><span className="eyebrow">{editing ? editing.archived ? "Восстановление" : "Редактирование" : "Новое задание"}</span><h1>{editing ? editing.title : "Добавить практическое задание"}</h1></div>
         </div>
         <form className="admin-form" onSubmit={submit}>
           <div className="admin-form-row practice-admin-row">
-            <label><span>Направление *</span><select className="admin-input" value={form.block} onChange={(event) => changeBlock(event.target.value as PracticeBlock)}>{PRACTICE_BLOCKS.map((block) => <option key={block} value={block}>{PRACTICE_BLOCK_LABELS[block]}</option>)}</select></label>
+            <label><span>Направление *</span><select className="admin-input" value={form.block} onChange={(event) => changeBlock(event.target.value as PracticeBlock)}>{sections.filter((section) => !section.archived).map((section) => <option key={section.id} value={section.id}>{section.title}</option>)}</select></label>
             <label><span>Название *</span><input className="admin-input" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={140} required /></label>
           </div>
           <div className="admin-form-row practice-admin-meta-row">
@@ -160,7 +168,7 @@ export function PracticeAdmin() {
       <aside className="admin-registry">
         <div className="admin-registry-head practice-registry-head"><div><span>Реестр практики</span><strong>{exercises.filter((exercise) => !exercise.archived).length} заданий</strong></div><a href="/practice" target="_blank" rel="noreferrer">Открыть практику ↗</a></div>
         <div className="admin-registry-filter">
-          <select className="admin-input" value={registryBlock} onChange={(event) => setRegistryBlock(event.target.value as PracticeBlock)} aria-label="Направление в реестре">{PRACTICE_BLOCKS.map((block) => <option key={block} value={block}>{PRACTICE_BLOCK_LABELS[block]}</option>)}</select>
+          <select className="admin-input" value={registryBlock} onChange={(event) => setRegistryBlock(event.target.value as PracticeBlock)} aria-label="Направление в реестре">{sections.map((section) => <option key={section.id} value={section.id}>{section.title}{section.archived ? " · архив" : ""}</option>)}</select>
         </div>
         <div className="admin-records">
           {visibleRecords.map((item) => (
@@ -174,6 +182,6 @@ export function PracticeAdmin() {
           {!visibleRecords.length ? <div className="admin-empty"><BookOpen /><p>В этом направлении пока нет заданий.</p></div> : null}
         </div>
       </aside>
-    </div>
+    </div></div>
   );
 }

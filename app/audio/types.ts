@@ -10,6 +10,8 @@ export type AudioExercise = {
   sourceName: string;
   difficulty: AudioDifficulty;
   published: boolean;
+  availableInAudio: boolean;
+  availableInExam: boolean;
   audioUrl: string;
   audioPathname: string;
   audioSize: number;
@@ -27,10 +29,11 @@ export type AudioExerciseInput = Pick<
   | "sourceName"
   | "difficulty"
   | "published"
+  | "availableInAudio"
+  | "availableInExam"
   | "audioUrl"
   | "audioPathname"
   | "audioSize"
   | "audioContentType"
   | "durationSeconds"
 > & { id?: string };
-

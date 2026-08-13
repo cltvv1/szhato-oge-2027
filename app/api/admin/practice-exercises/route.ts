@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  PRACTICE_BLOCKS,
   PRACTICE_LEVELS,
   type PracticeExerciseInput,
 } from "@/app/practice/types";
@@ -10,13 +9,14 @@ import {
   getPracticeExercises,
   savePracticeExercise,
 } from "@/lib/practice-store";
+import { getPracticeSection, getPracticeSections } from "@/lib/practice-section-store";
 
 function validate(input: Partial<PracticeExerciseInput>) {
   if (!input.title?.trim()) return "Укажите название задания.";
   if (!input.source?.trim()) return "Добавьте исходный текст.";
   if (!input.prompt?.trim()) return "Добавьте формулировку задания.";
   if (!input.model?.trim()) return "Добавьте возможный разбор.";
-  if (!input.block || !PRACTICE_BLOCKS.includes(input.block)) return "Выберите направление практики.";
+  if (!input.block) return "Выберите направление практики.";
   if (!input.level || !PRACTICE_LEVELS.includes(input.level)) return "Выберите уровень сложности.";
   if (typeof input.minutes !== "number" || !Number.isInteger(input.minutes) || input.minutes < 1 || input.minutes > 120) return "Укажите время от 1 до 120 минут.";
   if (typeof input.sortOrder !== "number" || !Number.isInteger(input.sortOrder) || input.sortOrder < 1 || input.sortOrder > 9999) return "Укажите позицию в списке.";
@@ -27,7 +27,8 @@ function validate(input: Partial<PracticeExerciseInput>) {
 
 export async function GET() {
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Требуется вход." }, { status: 401 });
-  return NextResponse.json({ exercises: await getPracticeExercises(true, true) });
+  const [exercises, sections] = await Promise.all([getPracticeExercises(true, true), getPracticeSections(true, true)]);
+  return NextResponse.json({ exercises, sections });
 }
 
 export async function POST(request: Request) {
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   const input = (await request.json()) as PracticeExerciseInput;
   const error = validate(input);
   if (error) return NextResponse.json({ error }, { status: 400 });
+  const section = await getPracticeSection(input.block);
+  if (!section || section.archived) return NextResponse.json({ error: "Выбранное направление не найдено или находится в архиве." }, { status: 400 });
 
   const exercise = await savePracticeExercise({
     ...input,

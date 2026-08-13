@@ -11,7 +11,11 @@ function normalizeRecord(value: unknown): AudioExercise | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Partial<AudioExercise>;
   if (!item.id || !item.title || !item.audioUrl || !item.audioPathname) return null;
-  return item as AudioExercise;
+  return {
+    ...item,
+    availableInAudio: item.availableInAudio ?? true,
+    availableInExam: item.availableInExam ?? true,
+  } as AudioExercise;
 }
 
 async function fetchRecord(url: string) {
@@ -24,13 +28,17 @@ async function fetchRecord(url: string) {
   }
 }
 
-export async function getAudioExercises(includeDrafts = false) {
+export async function getAudioExercises(includeDrafts = false, destination?: "audio" | "exam") {
   if (!configured()) return [] as AudioExercise[];
   const result = await list({ prefix: RECORD_PREFIX, limit: 1000 });
-  const records = await Promise.all(result.blobs.map((blob) => fetchRecord(blob.url)));
+  const records = await Promise.all(result.blobs.map((blob) => {
+    const separator = blob.url.includes("?") ? "&" : "?";
+    return fetchRecord(`${blob.url}${separator}version=${encodeURIComponent(blob.etag)}`);
+  }));
   return records
     .filter((record): record is AudioExercise => Boolean(record))
     .filter((record) => includeDrafts || record.published)
+    .filter((record) => destination === "audio" ? record.availableInAudio : destination === "exam" ? record.availableInExam : true)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
@@ -46,6 +54,8 @@ export async function saveAudioExercise(input: AudioExerciseInput) {
   const id = existing?.id || input.id || crypto.randomUUID();
   const record: AudioExercise = {
     ...input,
+    availableInAudio: input.availableInAudio ?? true,
+    availableInExam: input.availableInExam ?? false,
     id,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
@@ -74,4 +84,3 @@ export async function deleteAudioExercise(id: string) {
   ]);
   return true;
 }
-
