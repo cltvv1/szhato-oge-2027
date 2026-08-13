@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Dumbbell, FilePenLine, House, Leaf } from "lucide-react";
+import { BookOpen, Dumbbell, FilePenLine, Headphones, House, Leaf } from "lucide-react";
 import { useProgress } from "./ProgressProvider";
 
 const links = [
   { href: "/", label: "Главная", icon: House },
   { href: "/theory", label: "Теория", icon: BookOpen },
   { href: "/practice", label: "Практика", icon: Dumbbell },
+  { href: "/audio", label: "Аудио", icon: Headphones },
   { href: "/simulator", label: "Экзамен", icon: FilePenLine },
 ];
 
@@ -44,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="site-footer">
         <div className="container footer-inner">
           <div><strong>СЖАТО.</strong> Интерактивная подготовка к изложению ОГЭ — 2027</div>
-          <div>Автор программы: Кроневальд Анна Андреевна</div>
+          <div>Автор программы: Кроневальд Анна Андреевна · <Link href="/admin">Панель автора</Link></div>
         </div>
       </footer>
     </div>

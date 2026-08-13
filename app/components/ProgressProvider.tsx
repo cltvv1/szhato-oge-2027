@@ -19,12 +19,15 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const task = window.setTimeout(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
       setCompleted(Array.isArray(saved.completed) ? saved.completed : []);
       setAnswers(saved.answers && typeof saved.answers === "object" ? saved.answers : {});
     } catch { /* start clean */ }
     setReady(true);
+    }, 0);
+    return () => window.clearTimeout(task);
   }, []);
 
   useEffect(() => {

@@ -3,6 +3,7 @@ import "./globals.css";
 import { ProgressProvider } from "./components/ProgressProvider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://szhato-oge-2027-s5kb.vercel.app"),
   title: {
     default: "СЖАТО — подготовка к изложению ОГЭ",
     template: "%s · СЖАТО",

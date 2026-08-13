@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, CheckCircle2, Dumbbell, FilePenLine, Layers3, TimerReset, Trophy, WholeWord } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Dumbbell, FilePenLine, Headphones, Layers3, TimerReset, Trophy, WholeWord } from "lucide-react";
 import { AppShell } from "./components/AppShell";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
               <p className="lead">Полный интерактивный курс по сжатому изложению для 9 класса: от первой микротемы до уверенной работы на экзамене.</p>
               <div className="hero-actions">
                 <Link className="button button-primary" href="/theory">Начать обучение <ArrowRight size={18} /></Link>
-                <Link className="button button-secondary" href="/practice">Открыть тренажёр</Link>
+                <Link className="button button-secondary" href="/audio"><Headphones size={18} /> Слушать аудио</Link>
               </div>
             </div>
             <aside className="hero-card" aria-label="Критерии оценивания">
@@ -47,10 +47,11 @@ export default function Home() {
               <div><span className="eyebrow">Твой маршрут</span><h2 className="section-title">От понимания — к навыку</h2></div>
               <p className="section-copy">Каждый этап продолжает предыдущий. Ответы и выполненные задания сохраняются на этом устройстве автоматически.</p>
             </div>
-            <div className="path-grid">
+            <div className="path-grid path-grid-four">
               <Link href="/theory" className="path-card"><span className="path-number">01 / РАЗОБРАТЬСЯ</span><span className="path-icon"><BookOpen /></span><h3>Понять систему</h3><p>Как слушать, находить микротемы, сжимать и проверять работу по критериям.</p><span className="arrow-link">6 уроков <ArrowRight size={17} /></span></Link>
               <Link href="/practice" className="path-card"><span className="path-number">02 / НАТРЕНИРОВАТЬ</span><span className="path-icon"><Dumbbell /></span><h3>Решать по шагам</h3><p>Абзацы, три приёма сжатия и редактура чужих ошибок с образцами ответа.</p><span className="arrow-link">26 заданий <ArrowRight size={17} /></span></Link>
-              <Link href="/simulator" className="path-card"><span className="path-number">03 / ПРОВЕРИТЬ</span><span className="path-icon"><FilePenLine /></span><h3>Пройти репетицию</h3><p>Два чтения, таймер, поле для чистовика, счётчик слов и финальный чек-лист.</p><span className="arrow-link">Начать экзамен <ArrowRight size={17} /></span></Link>
+              <Link href="/audio" className="path-card"><span className="path-number">03 / УСЛЫШАТЬ</span><span className="path-icon"><Headphones /></span><h3>Работать с аудио</h3><p>Живой каталог текстов: два прослушивания, исходник для сверки и собственное изложение.</p><span className="arrow-link">Открыть аудиокаталог <ArrowRight size={17} /></span></Link>
+              <Link href="/simulator" className="path-card"><span className="path-number">04 / ПРОВЕРИТЬ</span><span className="path-icon"><FilePenLine /></span><h3>Пройти репетицию</h3><p>Два чтения, таймер, поле для чистовика, счётчик слов и финальный чек-лист.</p><span className="arrow-link">Начать экзамен <ArrowRight size={17} /></span></Link>
             </div>
           </div>
         </section>
