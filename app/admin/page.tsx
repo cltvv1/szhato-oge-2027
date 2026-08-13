@@ -11,10 +11,9 @@ export default function AdminPage() {
     <main className="admin-page">
       <header className="admin-header">
         <Link href="/" className="brand"><span className="brand-mark"><Leaf size={19} /></span>СЖАТО.</Link>
-        <span>Управление аудиоупражнениями</span>
+        <span>Панель автора</span>
       </header>
       <AdminDashboard />
     </main>
   );
 }
-

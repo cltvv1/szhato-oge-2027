@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Check, Edit3, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud } from "lucide-react";
+import { BookOpen, Check, Edit3, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud } from "lucide-react";
 import { AUDIO_DIFFICULTIES, type AudioExercise, type AudioExerciseInput } from "../audio/types";
+import { PracticeAdmin } from "./PracticeAdmin";
 
 type FormState = {
   title: string;
@@ -41,6 +42,7 @@ function safeFileName(name: string) {
 }
 
 export function AdminDashboard() {
+  const [section, setSection] = useState<"audio" | "practice">("audio");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [exercises, setExercises] = useState<AudioExercise[]>([]);
@@ -77,7 +79,7 @@ export function AdminDashboard() {
 
   async function signOut() {
     await fetch("/api/admin/session", { method: "DELETE" });
-    setAuthenticated(false); setExercises([]); resetForm();
+    setAuthenticated(false); setExercises([]); setSection("audio"); resetForm();
   }
 
   function resetForm() {
@@ -158,8 +160,8 @@ export function AdminDashboard() {
       <div className="admin-login-card">
         <span className="admin-login-icon"><Headphones /></span>
         <span className="eyebrow">Панель автора</span>
-        <h1>Вход в аудиокаталог</h1>
-        <p>Здесь Анна может добавлять тексты и аудиозаписи, сохранять черновики и публиковать упражнения для учеников.</p>
+        <h1>Вход в панель автора</h1>
+        <p>Здесь Анна может управлять практическими заданиями и аудиозаписями, сохранять черновики и публиковать материалы для учеников.</p>
         <form onSubmit={signIn}>
           <label className="field-label" htmlFor="admin-password">Пароль администратора</label>
           <input id="admin-password" className="admin-input" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
@@ -171,11 +173,18 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="admin-layout">
+    <div className="admin-workspace">
+      <div className="admin-workspace-nav">
+        <div className="admin-content-tabs" role="tablist" aria-label="Разделы панели автора">
+          <button type="button" role="tab" aria-selected={section === "audio"} className={section === "audio" ? "active" : ""} onClick={() => setSection("audio")}><Headphones size={18} /> Аудиоупражнения</button>
+          <button type="button" role="tab" aria-selected={section === "practice"} className={section === "practice" ? "active" : ""} onClick={() => setSection("practice")}><BookOpen size={18} /> Практические задания</button>
+        </div>
+        <button type="button" className="button button-secondary" onClick={signOut}><LogOut size={17} /> Выйти</button>
+      </div>
+      {section === "practice" ? <PracticeAdmin /> : <div className="admin-layout">
       <section className="admin-editor">
         <div className="admin-section-head">
           <div><span className="eyebrow">{editing ? "Редактирование" : "Новое упражнение"}</span><h1>{editing ? editing.title : "Добавить текст и аудио"}</h1></div>
-          <button type="button" className="button button-secondary" onClick={signOut}><LogOut size={17} /> Выйти</button>
         </div>
         <form className="admin-form" onSubmit={submit}>
           <label><span>Название *</span><input className="admin-input" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={140} required /></label>
@@ -217,6 +226,7 @@ export function AdminDashboard() {
           )) : <div className="admin-empty"><Headphones /><p>Здесь появятся загруженные упражнения.</p></div>}
         </div>
       </aside>
+      </div>}
     </div>
   );
 }

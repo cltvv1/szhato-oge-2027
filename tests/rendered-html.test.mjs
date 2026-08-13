@@ -28,6 +28,28 @@ test("includes the public audio catalog and author panel", async () => {
   assert.match(admin, /published/);
 });
 
+test("keeps practice split into three directions and author-managed", async () => {
+  await Promise.all([
+    access(new URL("app/practice/PracticeClient.tsx", root)),
+    access(new URL("app/admin/PracticeAdmin.tsx", root)),
+    access(new URL("app/api/admin/practice-exercises/route.ts", root)),
+    access(new URL("lib/practice-store.ts", root)),
+  ]);
+
+  const [practice, admin, store] = await Promise.all([
+    source("app/practice/PracticeClient.tsx"),
+    source("app/admin/PracticeAdmin.tsx"),
+    source("lib/practice-store.ts"),
+  ]);
+
+  assert.match(practice, /PRACTICE_BLOCKS\.map/);
+  assert.doesNotMatch(practice, /Все задания/);
+  assert.match(admin, /Добавить практическое задание/);
+  assert.match(admin, /В архив/);
+  assert.match(store, /seedExercises/);
+  assert.match(store, /BLOB_READ_WRITE_TOKEN/);
+});
+
 test("keeps admin credentials server-side and session cookies hardened", async () => {
   const [auth, uploadRoute, gitignore] = await Promise.all([
     source("lib/admin-auth.ts"),
