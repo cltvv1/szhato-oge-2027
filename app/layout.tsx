@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { Lora } from "next/font/google";
 import "./globals.css";
 import { ProgressProvider } from "./components/ProgressProvider";
+
+const displayFont = Lora({
+  subsets: ["cyrillic", "latin"],
+  weight: ["700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://szhato-oge-2027-s5kb.vercel.app"),
@@ -23,7 +31,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body>
+      <body className={displayFont.variable}>
         <ProgressProvider>{children}</ProgressProvider>
       </body>
     </html>
