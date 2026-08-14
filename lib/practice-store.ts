@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 import { exercises as seedExercises } from "@/app/data";
 import type { PracticeExercise, PracticeExerciseInput } from "@/app/practice/types";
 
@@ -13,7 +13,7 @@ function normalizeRecord(value: unknown): PracticeExercise | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Partial<PracticeExercise>;
   if (!item.id || !item.title || !item.block || !item.source || !item.prompt || !item.model) return null;
-  return { ...item, isSeed: Boolean(item.isSeed) } as PracticeExercise;
+  return { ...item, deleted: Boolean(item.deleted), isSeed: Boolean(item.isSeed) } as PracticeExercise;
 }
 
 async function fetchRecord(url: string) {
@@ -43,6 +43,7 @@ function seedRecord(index: number): PracticeExercise {
     ...seed,
     published: true,
     archived: false,
+    deleted: false,
     sortOrder: positionInBlock,
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -62,6 +63,7 @@ export async function getPracticeExercises(includeUnpublished = false, includeAr
   const additions = stored.filter((record) => !seedIds.has(record.id)).map((record) => ({ ...record, isSeed: false }));
 
   return [...mergedSeeds, ...additions]
+    .filter((record) => !record.deleted)
     .filter((record) => includeArchived || !record.archived)
     .filter((record) => includeUnpublished || record.published)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt));
@@ -80,6 +82,7 @@ export async function savePracticeExercise(input: PracticeExerciseInput) {
     ...input,
     id: existing?.id || input.id || `practice-${crypto.randomUUID()}`,
     archived: input.archived ?? false,
+    deleted: input.deleted ?? false,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     isSeed: existing?.isSeed || false,
@@ -103,4 +106,15 @@ export async function archivePracticeExercise(id: string) {
     published: false,
     archived: true,
   });
+}
+
+export async function deletePracticeExercise(id: string) {
+  const existing = await getPracticeExercise(id);
+  if (!existing) return false;
+  if (existing.isSeed) {
+    await savePracticeExercise({ ...existing, id, published: false, archived: true, deleted: true });
+  } else {
+    await del(`${RECORD_PREFIX}${id}.json`);
+  }
+  return true;
 }

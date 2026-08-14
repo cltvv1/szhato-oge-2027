@@ -97,6 +97,34 @@ test("keeps practice directions dynamic and author-managed", async () => {
   assert.match(route, /getPracticeSection/);
 });
 
+test("permanently removes archived author content only after explicit confirmation", async () => {
+  const [practiceAdmin, sectionsAdmin, theoryAdmin, practiceRoute, sectionsRoute, theoryRoute, practiceStore, sectionsStore, theoryStore] = await Promise.all([
+    source("app/admin/PracticeAdmin.tsx"),
+    source("app/admin/PracticeSectionsAdmin.tsx"),
+    source("app/admin/TheoryAdmin.tsx"),
+    source("app/api/admin/practice-exercises/route.ts"),
+    source("app/api/admin/practice-sections/route.ts"),
+    source("app/api/admin/theory-lessons/route.ts"),
+    source("lib/practice-store.ts"),
+    source("lib/practice-section-store.ts"),
+    source("lib/theory-store.ts"),
+  ]);
+
+  for (const admin of [practiceAdmin, sectionsAdmin, theoryAdmin]) {
+    assert.match(admin, /Удалить навсегда/);
+    assert.match(admin, /window\.confirm/);
+    assert.match(admin, /permanent=true/);
+  }
+  for (const route of [practiceRoute, sectionsRoute, theoryRoute]) {
+    assert.match(route, /searchParams\.get\("permanent"\) === "true"/);
+    assert.match(route, /Сначала перенесите/);
+  }
+  assert.match(sectionsRoute, /Сначала удалите все задания/);
+  assert.match(practiceStore, /deletePracticeExercise/);
+  assert.match(sectionsStore, /deletePracticeSection/);
+  assert.match(theoryStore, /deleteTheoryLesson/);
+});
+
 test("uses one audio library for free training and a protected exam flow", async () => {
   await Promise.all([
     access(new URL("app/audio/AudioCatalogClient.tsx", root)),

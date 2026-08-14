@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 import { lessons as seedLessons } from "@/app/data";
 import type { TheoryLesson, TheoryLessonInput } from "@/app/theory/types";
 
@@ -18,6 +18,7 @@ function normalizeRecord(value: unknown): TheoryLesson | null {
     before: item.before || "",
     after: item.after || "",
     question: item.question || null,
+    deleted: Boolean(item.deleted),
     isSeed: Boolean(item.isSeed),
   } as TheoryLesson;
 }
@@ -46,6 +47,7 @@ function seedLesson(index: number): TheoryLesson {
     question: null,
     published: true,
     archived: false,
+    deleted: false,
     sortOrder: index + 1,
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -63,6 +65,7 @@ export async function getTheoryLessons(includeUnpublished = false, includeArchiv
   });
   const additions = stored.filter((record) => !seedIds.has(record.id)).map((record) => ({ ...record, isSeed: false }));
   return [...seeds, ...additions]
+    .filter((record) => !record.deleted)
     .filter((record) => includeArchived || !record.archived)
     .filter((record) => includeUnpublished || record.published)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt));
@@ -80,6 +83,7 @@ export async function saveTheoryLesson(input: TheoryLessonInput) {
     ...input,
     id: existing?.id || input.id || `lesson-${crypto.randomUUID()}`,
     archived: input.archived ?? false,
+    deleted: input.deleted ?? false,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     isSeed: existing?.isSeed || false,
@@ -94,4 +98,15 @@ export async function archiveTheoryLesson(id: string) {
   const existing = await getTheoryLesson(id);
   if (!existing) return null;
   return saveTheoryLesson({ ...existing, id, published: false, archived: true });
+}
+
+export async function deleteTheoryLesson(id: string) {
+  const existing = await getTheoryLesson(id);
+  if (!existing) return false;
+  if (existing.isSeed) {
+    await saveTheoryLesson({ ...existing, id, published: false, archived: true, deleted: true });
+  } else {
+    await del(`${RECORD_PREFIX}${id}.json`);
+  }
+  return true;
 }

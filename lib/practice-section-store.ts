@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 import {
   PRACTICE_BLOCK_DESCRIPTIONS,
   PRACTICE_BLOCK_LABELS,
@@ -16,7 +16,7 @@ function normalizeRecord(value: unknown): PracticeSection | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Partial<PracticeSection>;
   if (!item.id || !item.title) return null;
-  return { ...item, description: item.description || "", isSeed: Boolean(item.isSeed) } as PracticeSection;
+  return { ...item, description: item.description || "", deleted: Boolean(item.deleted), isSeed: Boolean(item.isSeed) } as PracticeSection;
 }
 
 async function storedRecords() {
@@ -39,6 +39,7 @@ function seedSection(id: string, index: number): PracticeSection {
     description: PRACTICE_BLOCK_DESCRIPTIONS[id],
     published: true,
     archived: false,
+    deleted: false,
     sortOrder: index + 1,
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -53,6 +54,7 @@ export async function getPracticeSections(includeUnpublished = false, includeArc
   const seeds = PRACTICE_BLOCKS.map((id, index) => ({ ...seedSection(id, index), ...overrides.get(id), isSeed: true }));
   const additions = stored.filter((record) => !seedIds.has(record.id)).map((record) => ({ ...record, isSeed: false }));
   return [...seeds, ...additions]
+    .filter((record) => !record.deleted)
     .filter((record) => includeArchived || !record.archived)
     .filter((record) => includeUnpublished || record.published)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt));
@@ -70,6 +72,7 @@ export async function savePracticeSection(input: PracticeSectionInput) {
     ...input,
     id: existing?.id || input.id || `section-${crypto.randomUUID()}`,
     archived: input.archived ?? false,
+    deleted: input.deleted ?? false,
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     isSeed: existing?.isSeed || false,
@@ -84,4 +87,15 @@ export async function archivePracticeSection(id: string) {
   const existing = await getPracticeSection(id);
   if (!existing) return null;
   return savePracticeSection({ ...existing, id, published: false, archived: true });
+}
+
+export async function deletePracticeSection(id: string) {
+  const existing = await getPracticeSection(id);
+  if (!existing) return false;
+  if (existing.isSeed) {
+    await savePracticeSection({ ...existing, id, published: false, archived: true, deleted: true });
+  } else {
+    await del(`${RECORD_PREFIX}${id}.json`);
+  }
+  return true;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Archive, BookOpen, Check, Edit3, Layers3, LoaderCircle, Plus, RotateCcw } from "lucide-react";
+import { Archive, BookOpen, Check, Edit3, Layers3, LoaderCircle, Plus, RotateCcw, Trash2 } from "lucide-react";
 import {
   PRACTICE_LEVELS,
   type PracticeBlock,
@@ -132,6 +132,18 @@ export function PracticeAdmin() {
     setMessage("Задание перенесено в архив. Его можно восстановить через редактирование.");
   }
 
+  async function remove(item: PracticeExercise) {
+    if (!window.confirm(`Удалить «${item.title}» навсегда? Восстановить задание после этого будет невозможно.`)) return;
+    setBusy(true); setError(""); setMessage("");
+    const response = await fetch(`/api/admin/practice-exercises?id=${encodeURIComponent(item.id)}&permanent=true`, { method: "DELETE" });
+    const data = await response.json();
+    setBusy(false);
+    if (!response.ok) { setError(data.error || "Не удалось удалить задание."); return; }
+    setExercises((current) => current.filter((exercise) => exercise.id !== item.id));
+    if (editing?.id === item.id) resetForm(item.block);
+    setMessage("Задание удалено навсегда.");
+  }
+
   const visibleRecords = exercises.filter((exercise) => exercise.block === registryBlock);
 
   if (mode === "sections") return <div><div className="admin-subtabs" role="tablist" aria-label="Управление практикой"><button type="button" role="tab" aria-selected={false} onClick={() => setMode("exercises")}><BookOpen size={17} /> Задания</button><button type="button" role="tab" aria-selected className="active"><Layers3 size={17} /> Направления</button></div><PracticeSectionsAdmin onChanged={() => void load()} /></div>;
@@ -176,7 +188,7 @@ export function PracticeAdmin() {
               <div className="admin-record-status"><span className={item.archived ? "archived" : item.published ? "published" : "draft"}>{item.archived ? "Архив" : item.published ? "Опубликовано" : "Черновик"}</span><span>№ {item.sortOrder} · {item.level}</span></div>
               <h3>{item.title}</h3>
               <p className="admin-record-preview">{item.prompt}</p>
-              <div className="admin-record-actions"><button type="button" onClick={() => startEdit(item)}>{item.archived ? <RotateCcw size={15} /> : <Edit3 size={15} />} {item.archived ? "Восстановить" : "Изменить"}</button>{!item.archived ? <button type="button" className="danger" onClick={() => archive(item)}><Archive size={15} /> В архив</button> : null}</div>
+              <div className="admin-record-actions"><button type="button" onClick={() => startEdit(item)}>{item.archived ? <RotateCcw size={15} /> : <Edit3 size={15} />} {item.archived ? "Восстановить" : "Изменить"}</button>{item.archived ? <button type="button" className="danger" onClick={() => remove(item)}><Trash2 size={15} /> Удалить навсегда</button> : <button type="button" className="danger" onClick={() => archive(item)}><Archive size={15} /> В архив</button>}</div>
             </article>
           ))}
           {!visibleRecords.length ? <div className="admin-empty"><BookOpen /><p>В этом направлении пока нет заданий.</p></div> : null}

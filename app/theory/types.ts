@@ -21,6 +21,7 @@ export type TheoryLesson = {
   question: TheoryQuestion | null;
   published: boolean;
   archived: boolean;
+  deleted: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -29,4 +30,4 @@ export type TheoryLesson = {
 
 export type TheoryLessonInput = Pick<TheoryLesson,
   "short" | "title" | "minutes" | "intro" | "body" | "bullets" | "callout" | "before" | "after" | "question" | "published" | "sortOrder"
-> & { id?: string; archived?: boolean };
+> & { id?: string; archived?: boolean; deleted?: boolean };

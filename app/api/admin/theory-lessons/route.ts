@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { TheoryLessonInput } from "@/app/theory/types";
 import { isAdminAuthenticated, requestHasSameOrigin } from "@/lib/admin-auth";
-import { archiveTheoryLesson, getTheoryLessons, saveTheoryLesson } from "@/lib/theory-store";
+import { archiveTheoryLesson, deleteTheoryLesson, getTheoryLesson, getTheoryLessons, saveTheoryLesson } from "@/lib/theory-store";
 
 function validate(input: Partial<TheoryLessonInput>) {
   if (!input.short?.trim() || !input.title?.trim() || !input.intro?.trim()) return "Заполните короткое название, заголовок и вступление.";
@@ -46,8 +46,16 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   if (!requestHasSameOrigin(request)) return NextResponse.json({ error: "Недопустимый источник запроса." }, { status: 403 });
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Требуется вход." }, { status: 401 });
-  const id = new URL(request.url).searchParams.get("id");
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Не указан идентификатор." }, { status: 400 });
+  if (url.searchParams.get("permanent") === "true") {
+    const existing = await getTheoryLesson(id);
+    if (!existing) return NextResponse.json({ error: "Урок не найден." }, { status: 404 });
+    if (!existing.archived) return NextResponse.json({ error: "Сначала перенесите урок в архив." }, { status: 409 });
+    await deleteTheoryLesson(id);
+    return NextResponse.json({ ok: true });
+  }
   const lesson = await archiveTheoryLesson(id);
   if (!lesson) return NextResponse.json({ error: "Урок не найден." }, { status: 404 });
   return NextResponse.json({ lesson });

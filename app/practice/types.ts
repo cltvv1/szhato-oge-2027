@@ -22,6 +22,7 @@ export type PracticeSection = {
   description: string;
   published: boolean;
   archived: boolean;
+  deleted: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +32,7 @@ export type PracticeSection = {
 export type PracticeSectionInput = Pick<PracticeSection, "title" | "description" | "published" | "sortOrder"> & {
   id?: string;
   archived?: boolean;
+  deleted?: boolean;
 };
 
 export type PracticeExercise = {
@@ -44,6 +46,7 @@ export type PracticeExercise = {
   model: string;
   published: boolean;
   archived: boolean;
+  deleted: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -61,4 +64,4 @@ export type PracticeExerciseInput = Pick<
   | "model"
   | "published"
   | "sortOrder"
-> & { id?: string; archived?: boolean };
+> & { id?: string; archived?: boolean; deleted?: boolean };

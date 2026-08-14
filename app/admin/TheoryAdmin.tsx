@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Archive, Check, Edit3, LoaderCircle, Plus, RotateCcw } from "lucide-react";
+import { Archive, Check, Edit3, LoaderCircle, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { TheoryLesson, TheoryLessonInput } from "../theory/types";
 
 type FormState = Omit<TheoryLessonInput, "body" | "bullets" | "question"> & {
@@ -89,6 +89,17 @@ export function TheoryAdmin() {
     setMessage("Урок перенесён в архив.");
   }
 
+  async function remove(item: TheoryLesson) {
+    if (!window.confirm(`Удалить урок «${item.title}» навсегда? Восстановить его после этого будет невозможно.`)) return;
+    setBusy(true); setError(""); setMessage("");
+    const response = await fetch(`/api/admin/theory-lessons?id=${encodeURIComponent(item.id)}&permanent=true`, { method: "DELETE" });
+    const data = await response.json(); setBusy(false);
+    if (!response.ok) { setError(data.error || "Не удалось удалить урок."); return; }
+    setLessons((current) => current.filter((lesson) => lesson.id !== item.id));
+    if (editing?.id === item.id) resetForm();
+    setMessage("Урок удалён навсегда.");
+  }
+
   return <div className="admin-layout theory-admin-layout">
     <section className="admin-editor"><div className="admin-section-head"><div><span className="eyebrow">{editing ? editing.archived ? "Восстановление" : "Редактирование" : "Новый урок"}</span><h1>{editing ? editing.title : "Добавить урок теории"}</h1></div></div>
       <form className="admin-form" onSubmit={submit}>
@@ -106,6 +117,6 @@ export function TheoryAdmin() {
         <div className="admin-form-actions"><button className="button button-primary" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18} /> : editing?.archived ? <RotateCcw size={18} /> : editing ? <Edit3 size={18} /> : <Plus size={18} />}{editing?.archived ? "Восстановить и сохранить" : editing ? "Сохранить изменения" : "Добавить урок"}</button>{editing ? <button type="button" className="button button-secondary" onClick={resetForm}>Отменить</button> : null}</div>
       </form>
     </section>
-    <aside className="admin-registry"><div className="admin-registry-head"><div><span>Уроки теории</span><strong>{lessons.filter((item) => !item.archived).length} уроков</strong></div><a href="/theory" target="_blank" rel="noreferrer">Открыть теорию ↗</a></div><div className="admin-records">{lessons.map((item) => <article className={`admin-record ${item.archived ? "archived" : ""}`} key={item.id}><div className="admin-record-status"><span className={item.archived ? "archived" : item.published ? "published" : "draft"}>{item.archived ? "Архив" : item.published ? "Опубликовано" : "Черновик"}</span><span>№ {item.sortOrder} · {item.minutes} мин</span></div><h3>{item.title}</h3><p className="admin-record-preview">{item.question ? "Есть тест после урока" : "Без теста"}</p><div className="admin-record-actions"><button type="button" onClick={() => startEdit(item)}>{item.archived ? <RotateCcw size={15} /> : <Edit3 size={15} />} {item.archived ? "Восстановить" : "Изменить"}</button>{!item.archived ? <button type="button" className="danger" onClick={() => archive(item)}><Archive size={15} /> В архив</button> : null}</div></article>)}</div></aside>
+    <aside className="admin-registry"><div className="admin-registry-head"><div><span>Уроки теории</span><strong>{lessons.filter((item) => !item.archived).length} уроков</strong></div><a href="/theory" target="_blank" rel="noreferrer">Открыть теорию ↗</a></div><div className="admin-records">{lessons.map((item) => <article className={`admin-record ${item.archived ? "archived" : ""}`} key={item.id}><div className="admin-record-status"><span className={item.archived ? "archived" : item.published ? "published" : "draft"}>{item.archived ? "Архив" : item.published ? "Опубликовано" : "Черновик"}</span><span>№ {item.sortOrder} · {item.minutes} мин</span></div><h3>{item.title}</h3><p className="admin-record-preview">{item.question ? "Есть тест после урока" : "Без теста"}</p><div className="admin-record-actions"><button type="button" onClick={() => startEdit(item)}>{item.archived ? <RotateCcw size={15} /> : <Edit3 size={15} />} {item.archived ? "Восстановить" : "Изменить"}</button>{item.archived ? <button type="button" className="danger" onClick={() => remove(item)}><Trash2 size={15} /> Удалить навсегда</button> : <button type="button" className="danger" onClick={() => archive(item)}><Archive size={15} /> В архив</button>}</div></article>)}</div></aside>
   </div>;
 }

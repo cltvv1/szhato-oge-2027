@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { PracticeSectionInput } from "@/app/practice/types";
 import { isAdminAuthenticated, requestHasSameOrigin } from "@/lib/admin-auth";
-import { archivePracticeSection, getPracticeSections, savePracticeSection } from "@/lib/practice-section-store";
+import { archivePracticeSection, deletePracticeSection, getPracticeSection, getPracticeSections, savePracticeSection } from "@/lib/practice-section-store";
+import { getPracticeExercises } from "@/lib/practice-store";
 
 function validate(input: Partial<PracticeSectionInput>) {
   if (!input.title?.trim()) return "Укажите название направления.";
@@ -29,8 +30,20 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   if (!requestHasSameOrigin(request)) return NextResponse.json({ error: "Недопустимый источник запроса." }, { status: 403 });
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Требуется вход." }, { status: 401 });
-  const id = new URL(request.url).searchParams.get("id");
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Не указан идентификатор." }, { status: 400 });
+  if (url.searchParams.get("permanent") === "true") {
+    const existing = await getPracticeSection(id);
+    if (!existing) return NextResponse.json({ error: "Направление не найдено." }, { status: 404 });
+    if (!existing.archived) return NextResponse.json({ error: "Сначала перенесите направление в архив." }, { status: 409 });
+    const exercises = await getPracticeExercises(true, true);
+    if (exercises.some((exercise) => exercise.block === id)) {
+      return NextResponse.json({ error: "Сначала удалите все задания этого направления из архива." }, { status: 409 });
+    }
+    await deletePracticeSection(id);
+    return NextResponse.json({ ok: true });
+  }
   const section = await archivePracticeSection(id);
   if (!section) return NextResponse.json({ error: "Направление не найдено." }, { status: 404 });
   return NextResponse.json({ section });
