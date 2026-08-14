@@ -18,7 +18,7 @@ export function PracticeClient({ exercises, sections }: { exercises: PracticeExe
   const visibleSections = sections.filter((section) => exercises.some((exercise) => exercise.block === section.id));
   const firstBlock = visibleSections[0]?.id || sections[0]?.id || "paragraphs";
   const [filter, setFilter] = useState<PracticeBlock>(firstBlock);
-  const [open, setOpen] = useState<string | null>(exercises.find((exercise) => exercise.block === firstBlock)?.id || null);
+  const [open, setOpen] = useState<string | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const { completed, answers, saveAnswer, toggleComplete } = useProgress();
   const shown = exercises.filter((exercise) => exercise.block === filter);
@@ -26,7 +26,7 @@ export function PracticeClient({ exercises, sections }: { exercises: PracticeExe
 
   function selectBlock(block: PracticeBlock) {
     setFilter(block);
-    setOpen(exercises.find((exercise) => exercise.block === block)?.id || null);
+    setOpen(null);
   }
 
   return (

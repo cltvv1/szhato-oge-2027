@@ -59,6 +59,8 @@ test("keeps practice directions dynamic and author-managed", async () => {
   assert.match(page, /getPracticeSections\(\)/);
   assert.match(page, /visibleSectionIds\.has\(exercise\.block\)/);
   assert.match(practice, /visibleSections\.map/);
+  assert.match(practice, /useState<string \| null>\(null\)/);
+  assert.match(practice, /setFilter\(block\);\s*setOpen\(null\);/);
   assert.match(admin, /PracticeSectionsAdmin/);
   assert.match(route, /getPracticeSection/);
 });
