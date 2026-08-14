@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, ChevronDown, ChevronUp, Eye, Save, Trophy } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { useProgress } from "../components/ProgressProvider";
+import { SubmitForReviewButton } from "../components/SubmitForReviewButton";
 import {
   type PracticeBlock,
   type PracticeExercise,
@@ -84,6 +85,7 @@ export function PracticeClient({ exercises, sections }: { exercises: PracticeExe
                       <div className="exercise-actions">
                         <button type="button" className={`button ${done ? "button-ghost" : "button-primary"}`} onClick={() => toggleComplete(exercise.id)}>{done ? <><Check size={17} /> Выполнено</> : <><Save size={17} /> Отметить выполненным</>}</button>
                         <button type="button" className="button button-secondary" onClick={() => setModels((items) => showModel ? items.filter((id) => id !== exercise.id) : [...items, exercise.id])}><Eye size={17} /> {showModel ? "Скрыть ориентир" : "Показать ориентир"}</button>
+                        <SubmitForReviewButton kind="practice" taskId={exercise.id} answer={value} />
                       </div>
                       {showModel ? <div className="model-answer"><strong>Возможный разбор</strong>{exercise.model}</div> : null}
                     </div> : null}

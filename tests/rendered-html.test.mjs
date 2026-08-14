@@ -8,15 +8,47 @@ async function source(path) {
   return readFile(new URL(path, root), "utf8");
 }
 
-test("uses a four-part course navigation without a duplicate home link", async () => {
+test("uses course navigation with student results and no duplicate home link", async () => {
   const shell = await source("app/components/AppShell.tsx");
 
   for (const href of ["/theory", "/practice", "/audio", "/simulator"]) {
     assert.match(shell, new RegExp(`href: "${href.replace("/", "\\/")}"`));
   }
+  assert.match(shell, /href: "\/student"/);
   assert.doesNotMatch(shell, /href:\s*"\/"/);
   assert.match(shell, /href="\/"/);
   assert.match(shell, /\/api\/course-summary/);
+});
+
+test("keeps student work encrypted and exposes teacher review through protected routes", async () => {
+  await Promise.all([
+    access(new URL("app/student/StudentDashboard.tsx", root)),
+    access(new URL("app/admin/ClassroomAdmin.tsx", root)),
+    access(new URL("app/api/student/submissions/route.ts", root)),
+    access(new URL("app/api/admin/classroom/route.ts", root)),
+  ]);
+
+  const [security, studentAuth, store, studentRoute, adminRoute, practice, audio, exam] = await Promise.all([
+    source("lib/classroom-security.ts"),
+    source("lib/student-auth.ts"),
+    source("lib/classroom-store.ts"),
+    source("app/api/student/submissions/route.ts"),
+    source("app/api/admin/classroom/route.ts"),
+    source("app/practice/PracticeClient.tsx"),
+    source("app/audio/AudioCatalogClient.tsx"),
+    source("app/simulator/ExamSimulator.tsx"),
+  ]);
+
+  assert.match(security, /aes-256-gcm/);
+  assert.match(security, /CLASSROOM_SECRET/);
+  assert.match(studentAuth, /httpOnly:\s*true/);
+  assert.match(studentAuth, /sameSite:\s*"strict"/);
+  assert.match(store, /encryptClassroomRecord\(value\)/);
+  assert.match(adminRoute, /isAdminAuthenticated/);
+  assert.match(studentRoute, /getAuthenticatedStudent/);
+  assert.match(practice, /kind="practice"/);
+  assert.match(audio, /kind="audio"/);
+  assert.match(exam, /kind="exam"/);
 });
 
 test("serves author-managed theory lessons with optional tests", async () => {

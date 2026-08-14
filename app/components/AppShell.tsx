@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpen, Dumbbell, FilePenLine, Headphones, Leaf } from "lucide-react";
+import { BarChart3, BookOpen, Dumbbell, FilePenLine, Headphones, Leaf } from "lucide-react";
 import { useProgress } from "./ProgressProvider";
 
 const links = [
@@ -11,6 +11,7 @@ const links = [
   { href: "/practice", label: "Практика", icon: Dumbbell },
   { href: "/audio", label: "Аудио", icon: Headphones },
   { href: "/simulator", label: "Экзамен", icon: FilePenLine },
+  { href: "/student", label: "Результаты", icon: BarChart3 },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

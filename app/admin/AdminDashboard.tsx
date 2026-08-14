@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { BookOpen, Check, Edit3, GraduationCap, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud } from "lucide-react";
+import { BookOpen, Check, Edit3, GraduationCap, Headphones, LoaderCircle, LogOut, Plus, Trash2, UploadCloud, Users } from "lucide-react";
 import { AUDIO_DIFFICULTIES, type AudioExercise, type AudioExerciseInput } from "../audio/types";
 import { PracticeAdmin } from "./PracticeAdmin";
 import { TheoryAdmin } from "./TheoryAdmin";
+import { ClassroomAdmin } from "./ClassroomAdmin";
 
 type FormState = {
   title: string;
@@ -47,7 +48,7 @@ function safeFileName(name: string) {
 }
 
 export function AdminDashboard() {
-  const [section, setSection] = useState<"audio" | "theory" | "practice">("audio");
+  const [section, setSection] = useState<"audio" | "theory" | "practice" | "classroom">("audio");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [exercises, setExercises] = useState<AudioExercise[]>([]);
@@ -184,10 +185,11 @@ export function AdminDashboard() {
           <button type="button" role="tab" aria-selected={section === "audio"} className={section === "audio" ? "active" : ""} onClick={() => setSection("audio")}><Headphones size={18} /> Аудиоупражнения</button>
           <button type="button" role="tab" aria-selected={section === "theory"} className={section === "theory" ? "active" : ""} onClick={() => setSection("theory")}><GraduationCap size={18} /> Теория и тесты</button>
           <button type="button" role="tab" aria-selected={section === "practice"} className={section === "practice" ? "active" : ""} onClick={() => setSection("practice")}><BookOpen size={18} /> Практические задания</button>
+          <button type="button" role="tab" aria-selected={section === "classroom"} className={section === "classroom" ? "active" : ""} onClick={() => setSection("classroom")}><Users size={18} /> Ученики и проверки</button>
         </div>
         <button type="button" className="button button-secondary" onClick={signOut}><LogOut size={17} /> Выйти</button>
       </div>
-      {section === "practice" ? <PracticeAdmin /> : section === "theory" ? <TheoryAdmin /> : <div className="admin-layout">
+      {section === "classroom" ? <ClassroomAdmin /> : section === "practice" ? <PracticeAdmin /> : section === "theory" ? <TheoryAdmin /> : <div className="admin-layout">
       <section className="admin-editor">
         <div className="admin-section-head">
           <div><span className="eyebrow">{editing ? "Редактирование" : "Новое упражнение"}</span><h1>{editing ? editing.title : "Добавить текст и аудио"}</h1></div>
